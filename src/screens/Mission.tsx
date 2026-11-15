@@ -4,7 +4,7 @@ import { MISSIONS } from '../lib/missions'
 import { useSensor } from '../lib/sensor'
 import { SOURCES } from '../lib/sources'
 import { useStore } from '../lib/store'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Disclosure } from '../components/bits'
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -17,8 +17,9 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 export function Mission() {
-  const { mission, setMission, baseline, reset } = useStore()
+  const { mission, setMission, baseline, mode, crew, resetDemo, leave } = useStore()
   const sensor = useSensor()
+  const [confirming, setConfirming] = useState(false)
 
   return (
     <div className="mission">
@@ -63,12 +64,12 @@ export function Mission() {
               fills in the resting heart rate step of the check-in.
             </p>
             <div className="btn-row">
-              <button type="button" className="btn btn-primary" onClick={sensor.connect} disabled={!sensor.supported || sensor.state === 'connecting'}>
+              <button type="button" className="btn btn-primary" onClick={() => void sensor.connect()} disabled={!sensor.supported || sensor.state === 'connecting'}>
                 <Bluetooth size={18} aria-hidden="true" />
                 {sensor.state === 'connecting' ? 'Looking for sensors…' : 'Connect a sensor'}
               </button>
-              <button type="button" className="btn btn-secondary" onClick={sensor.simulate}>
-                Use a simulated sensor
+              <button type="button" className="btn btn-secondary" onClick={() => sensor.simulate('Tether band (demo)')}>
+                Use the demo Tether band
               </button>
             </div>
             {!sensor.supported && (
@@ -127,13 +128,57 @@ export function Mission() {
             </p>
           </div>
         </Disclosure>
-        <Disclosure summary={<span>Demo data</span>}>
-          <div className="disc-text">
-            <p className="note">Clear today’s check-in and return to Mars transit.</p>
-            <button type="button" className="btn btn-secondary" onClick={reset}>
-              Reset the demo
-            </button>
-          </div>
+        <Disclosure
+          summary={
+            <>
+              <span>Profile</span>
+              <span className="disc-aside">{mode === 'demo' ? 'Demo crew member' : crew.name}</span>
+            </>
+          }
+        >
+          {mode === 'demo' ? (
+            <div className="disc-text">
+              <p className="note">
+                {crew.name}, {crew.role.toLowerCase()}. A fictional crew member with 141 days of simulated readings.
+              </p>
+              <div className="btn-row">
+                <button type="button" className="btn btn-secondary" onClick={resetDemo}>
+                  Reset the demo
+                </button>
+                <button type="button" className="btn btn-secondary" onClick={() => leave()}>
+                  Set up my own profile
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="disc-text">
+              <p className="note">
+                {crew.name}, {crew.role.toLowerCase()}. Your profile and readings are stored in this browser only.
+              </p>
+              {confirming ? (
+                <>
+                  <p className="field-error">This deletes your profile and every reading. It cannot be undone.</p>
+                  <div className="btn-row">
+                    <button type="button" className="btn btn-secondary" onClick={() => leave(true)}>
+                      Delete profile
+                    </button>
+                    <button type="button" className="btn btn-secondary" onClick={() => setConfirming(false)}>
+                      Keep it
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="btn-row">
+                  <button type="button" className="btn btn-secondary" onClick={() => leave()}>
+                    Switch to the demo
+                  </button>
+                  <button type="button" className="btn btn-secondary" onClick={() => setConfirming(true)}>
+                    Delete profile…
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </Disclosure>
       </div>
     </div>

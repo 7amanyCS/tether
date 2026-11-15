@@ -19,6 +19,7 @@ const STEPS: Step[] = [
   { title: 'What is your blood pressure?', ids: ['sys', 'dia'] },
   { title: 'What is your temperature?', ids: ['temp'] },
   { title: 'What is your fasting blood glucose?', ids: ['glucose'] },
+  { title: 'What is your body mass?', ids: ['weight'] },
   { title: 'How long did you exercise?', ids: ['exercise'] },
 ]
 
@@ -73,12 +74,12 @@ function NumberField({ id, value, onChange, error }: { id: IndicatorId; value: s
 }
 
 export function CheckIn() {
-  const { entries, today, saveToday, mission, day } = useStore()
+  const { entries, baseline, today, saveToday, mission, day } = useStore()
   const sensor = useSensor()
   const [draft, setDraft] = useState<Draft>(() => {
-    const from = today ?? entries[entries.length - 1].values
+    const from = today ?? entries[entries.length - 1]?.values ?? {}
     const d = {} as Draft
-    for (const s of STEPS) for (const id of s.ids) d[id] = (from[id] ?? getIndicator(id).min).toFixed(getIndicator(id).decimals)
+    for (const s of STEPS) for (const id of s.ids) d[id] = (from[id] ?? baseline[id].mean).toFixed(getIndicator(id).decimals)
     return d
   })
   const [i, setI] = useState(0)

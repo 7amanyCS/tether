@@ -167,6 +167,29 @@ export const INDICATORS: IndicatorDef[] = [
     sources: ['hughson'],
   },
   {
+    id: 'weight',
+    name: 'Body mass',
+    short: 'Body mass',
+    unit: 'kg',
+    decimals: 1,
+    step: 0.1,
+    min: 30,
+    max: 200,
+    concern: 'low',
+    basis: 'latest',
+    limits: {},
+    why: 'Crews often eat less than they burn, and the loss shows up as falling body mass. Losing more than a few percent of your pre-flight mass takes muscle and bone with it.',
+    measure: 'Scales do not work without gravity. Use the mass measurement device: hold on, let its spring move you, and it works out your mass from how fast you move. In partial gravity, use the scale and its built-in correction.',
+    low: [
+      'Finish every planned meal today, including snacks.',
+      'Add one high-calorie item to each meal.',
+      'Drink your full fluid allowance.',
+      'Tell the ground if food tastes off or you have lost your appetite.',
+    ],
+    high: [],
+    sources: ['zwart', 'hughson'],
+  },
+  {
     id: 'exercise',
     name: 'Exercise',
     short: 'Exercise',
@@ -218,9 +241,9 @@ export const SYSTEMS: SystemDef[] = [
   {
     id: 'metabolism',
     name: 'Metabolism',
-    indicators: ['glucose'],
+    indicators: ['glucose', 'weight'],
     hazard: 'Hostile closed environment',
-    about: 'Glucose tracks whether food and energy are keeping pace with the work you are doing.',
+    about: 'Glucose and body mass show whether food and energy are keeping pace with the work you are doing.',
     spot: { x: 50, y: 42 },
   },
   {
@@ -242,8 +265,12 @@ export const DEFAULT_BASELINE: Record<IndicatorId, Baseline> = {
   dia: { mean: 74, sd: 5 },
   temp: { mean: 36.7, sd: 0.3 },
   glucose: { mean: 88, sd: 8 },
+  weight: { mean: 72, sd: 1.44 },
   exercise: { mean: 120, sd: 20 },
 }
+
+/** Day-to-day swing in body mass that counts as normal: two percent of baseline. */
+export const WEIGHT_SWING = 0.02
 
 export const MOOD_WORDS = ['', 'Very low', 'Low', 'Okay', 'Good', 'Great']
 

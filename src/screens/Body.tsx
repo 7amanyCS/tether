@@ -54,7 +54,13 @@ export function Body() {
           <p className="hazard">
             <span>Spaceflight hazard</span> {def.hazard}
           </p>
-          <ReadingRows readings={state.readings} />
+          {state.readings.length ? (
+            <ReadingRows readings={state.readings} />
+          ) : (
+            <p className="empty">
+              No readings yet. <a href="#/checkin">Log a check-in</a> to see this system.
+            </p>
+          )}
           {steps.length > 0 && (
             <>
               <h3>What to do</h3>

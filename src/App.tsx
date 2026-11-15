@@ -1,8 +1,10 @@
 import { Activity, Orbit, PersonStanding, TrendingUp } from 'lucide-react'
 import { Coach } from './components/Coach'
+import { useEffect, useRef } from 'react'
 import { Logo } from './components/bits'
 import { getIndicator, INDICATORS } from './lib/indicators'
 import { useRoute } from './lib/router'
+import { useSensor } from './lib/sensor'
 import { useStore } from './lib/store'
 import { Body } from './screens/Body'
 import { CheckIn } from './screens/CheckIn'
@@ -10,6 +12,7 @@ import { Detail } from './screens/Detail'
 import { Mission } from './screens/Mission'
 import { Today } from './screens/Today'
 import { Trends } from './screens/Trends'
+import { Welcome } from './screens/Welcome'
 import type { IndicatorId } from './lib/types'
 
 const NAV = [
@@ -21,7 +24,19 @@ const NAV = [
 
 export default function App() {
   const route = useRoute()
-  const { mission, day } = useStore()
+  const { mission, day, mode, profile } = useStore()
+  const sensor = useSensor()
+  const resumed = useRef(false)
+
+  // The demo band has nothing to pair with, so bring it back after a reload.
+  useEffect(() => {
+    if (resumed.current || mode !== 'own') return
+    resumed.current = true
+    if (profile?.source === 'band' && sensor.state === 'idle') sensor.simulate('Tether band (demo)')
+  }, [mode, profile, sensor])
+
+  if (!mode) return <Welcome />
+
   const page = route[0] ?? 'today'
   const indicator = page === 'i' && INDICATORS.some((d) => d.id === route[1]) ? getIndicator(route[1] as IndicatorId) : null
   const active = page === 'i' || page === 'checkin' ? 'today' : page

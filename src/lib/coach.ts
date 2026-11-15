@@ -37,11 +37,13 @@ const PROMPT: Record<IndicatorId, (r: Reading) => string> = {
   dia: () => 'What does my blood pressure mean?',
   temp: (r) => (r.direction === 'high' ? 'What do I do about this temperature?' : 'Why is my temperature low?'),
   glucose: (r) => (r.direction === 'low' ? 'My glucose is low. What now?' : 'What should I do about my glucose?'),
+  weight: () => 'How do I stop losing mass?',
   exercise: () => 'How do I catch up on exercise?',
 }
 
 /** Questions worth asking right now, most useful first. */
 export function suggestions({ a, plan, checkedIn }: State): string[] {
+  if (!a.readings.length) return ['What do you track?', 'How much radiation have I taken?']
   const out: string[] = []
   if (plan.tier === 3) out.push('What do I do while I wait for the ground?')
   out.push(`Why is my score ${a.score}?`)
@@ -53,6 +55,7 @@ export function suggestions({ a, plan, checkedIn }: State): string[] {
 }
 
 export function greeting({ a, plan }: State): string {
+  if (!a.readings.length) return 'No readings yet. Log your first check-in and I can talk you through what they mean.'
   if (!a.flagged.length) return 'Everything is inside your normal range today. Ask me about any reading or what to keep doing.'
   const names = list(a.flagged.slice(0, 3).map(lower))
   return `${plan.status === 'off' ? 'You are off baseline' : 'You are drifting'}: ${names} ${a.flagged.length > 1 ? 'are' : 'is'} outside your normal range. Ask me what it means or what to do.`
@@ -67,7 +70,7 @@ export function buildContext({ a, plan, mission, day, checkedIn }: State): strin
     `Tether score: ${a.score} of 100 (${STATUS_WORD[a.status]}). Today's check-in: ${checkedIn ? 'done' : `not done yet, readings are from ${mission.dayLabel.toLowerCase()} ${a.day}`}.`,
     `Radiation: ${cumulativeDose(mission, day)} of ${CAREER_LIMIT_MSV} mSv career limit, about ${mission.doseRate} mSv a day.`,
     '',
-    'Readings:',
+    a.readings.length ? 'Readings:' : 'Readings: none logged yet.',
     ...a.readings.map(
       (r) =>
         `- ${r.def.name}: ${shown(r)} (${r.def.basis === 'avg3' ? '3-day average' : 'latest'}), personal baseline ${base(r)}, ${STATUS_WORD[r.status]}${r.days ? ` for ${r.days} day${r.days > 1 ? 's' : ''}` : ''}.`,
@@ -91,6 +94,7 @@ const TOPICS: { ids: IndicatorId[]; words: RegExp }[] = [
   { ids: ['sys', 'dia'], words: /pressure|bp\b|systolic|diastolic/ },
   { ids: ['temp'], words: /temp|fever|hot|cold|sick|infect/ },
   { ids: ['glucose'], words: /glucose|sugar|eat|food|meal|diet/ },
+  { ids: ['weight'], words: /weight|mass|\bkg\b|appetite|calorie/ },
   { ids: ['exercise'], words: /exercise|workout|train|bone|muscle|treadmill/ },
 ]
 
@@ -111,6 +115,9 @@ export function localAnswer(question: string, s: State): string {
   if (/radiation|dose|msv/.test(q)) {
     const dose = cumulativeDose(mission, day)
     return `You have taken about ${dose} mSv, ${Math.round((dose / CAREER_LIMIT_MSV) * 100)} percent of the ${CAREER_LIMIT_MSV} mSv career limit. This mission adds roughly ${mission.doseRate} mSv a day. Nothing to do today beyond following shelter calls during solar storms.`
+  }
+  if (!a.readings.length) {
+    return 'I follow eight readings: sleep, mood, resting heart rate, blood pressure, temperature, blood glucose, body mass, and exercise. Each is compared with your own pre-flight baseline. Log your first check-in to get a score.'
   }
   if (/wait|ground|surgeon|officer|tell|call|who\b|report/.test(q)) {
     return [`${plan.title}. ${plan.reason}`, plan.link ?? '', plan.steps.length ? numbered(plan.steps) : ''].filter(Boolean).join('\n\n')

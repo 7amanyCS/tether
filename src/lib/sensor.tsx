@@ -10,7 +10,7 @@ interface Sensor {
   bpm: number | null
   error: string | null
   connect: () => Promise<void>
-  simulate: () => void
+  simulate: (name?: string) => void
   disconnect: () => void
 }
 
@@ -80,11 +80,11 @@ export function SensorProvider({ children }: { children: ReactNode }) {
     }
   }, [stop])
 
-  const simulate = useCallback(() => {
+  const simulate = useCallback((label = 'Simulated sensor') => {
     stop()
     setError(null)
     setSimulated(true)
-    setName('Simulated sensor')
+    setName(label)
     setState('live')
     let v = 63
     setBpm(v)

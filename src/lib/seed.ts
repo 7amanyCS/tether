@@ -50,6 +50,8 @@ export function seedEntries(): Entry[] {
         dia: round(75 + noise() * 5),
         temp: round(36.8 + noise() * 0.25, 1),
         glucose: round(90 + noise() * 9),
+        // A slow loss that levels off about 1.5 kg under the pre-flight mass.
+        weight: round(72 - 1.5 * (1 - Math.exp(-day / 45)) + noise() * 0.25, 1),
         exercise: round((112 + noise() * 28) / 5) * 5,
       },
     })

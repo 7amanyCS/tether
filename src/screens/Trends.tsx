@@ -20,6 +20,11 @@ export function Trends() {
         <Segmented label="Time range" options={RANGES} value={range} onChange={setRange} />
       </header>
 
+      {!a.readings.length && (
+        <p className="empty">
+          Nothing to chart yet. <a href="#/checkin">Log a check-in</a> and each reading gets a line here.
+        </p>
+      )}
       <div className="trend-grid">
         {a.readings.map((r) => (
           <a className="trend" key={r.id} href={`#/i/${r.id}`}>

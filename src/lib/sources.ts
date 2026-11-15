@@ -45,6 +45,12 @@ export const SOURCES: Source[] = [
     url: 'https://doi.org/10.1359/JBMR.040307',
   },
   {
+    id: 'zwart',
+    cite: 'Zwart SR et al. Aviat Space Environ Med. 2014;85(9):897–904.',
+    finding: 'Body mass is followed through long missions because crews often lose mass when they eat less than they need.',
+    url: 'https://doi.org/10.3357/ASEM.3979.2014',
+  },
+  {
     id: 'zeitlin',
     cite: 'Zeitlin C et al. Science. 2013;340(6136):1080–1084.',
     finding: 'Curiosity measured about 1.8 mSv per day inside the spacecraft on the way to Mars.',

@@ -6,6 +6,7 @@ export type IndicatorId =
   | 'dia'
   | 'temp'
   | 'glucose'
+  | 'weight'
   | 'exercise'
 
 export type SystemId = 'mind' | 'heart' | 'immune' | 'metabolism' | 'bone'
@@ -31,6 +32,7 @@ export type SourceId =
   | 'crucian'
   | 'hughson'
   | 'lang'
+  | 'zwart'
   | 'zeitlin'
   | 'hassler'
   | 'zhang'
@@ -66,6 +68,20 @@ export interface SystemDef {
   about: string
   /** Position on the body figure, in percent of its box. */
   spot: { x: number; y: number }
+}
+
+export type ReadingSource = 'band' | 'bluetooth' | 'manual'
+
+export interface Profile {
+  name: string
+  role: string
+  missionId: Mission['id']
+  /** Mission day on the date the profile was created, and that date (YYYY-MM-DD). */
+  startDay: number
+  startedOn: string
+  baseline: Record<IndicatorId, Baseline>
+  source: ReadingSource
+  entries: Entry[]
 }
 
 export interface Mission {

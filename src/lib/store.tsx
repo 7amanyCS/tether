@@ -3,16 +3,25 @@ import { assess, plan, type Assessment, type Plan } from './engine'
 import { DEFAULT_BASELINE } from './indicators'
 import { MISSION_DAY, getMission } from './missions'
 import { seedEntries } from './seed'
-import type { Baseline, Entry, IndicatorId, Mission, Values } from './types'
+import type { Baseline, Entry, IndicatorId, Mission, Profile, Values } from './types'
 
-const KEY = 'tether.v1'
+const KEY = 'tether.v2'
 
 interface Saved {
+  /** null until the visitor chooses the demo or sets up a profile. */
+  mode: 'demo' | 'own' | null
   missionId: string
+  /** Today's check-in for the demo crew member. */
   today: Values | null
+  profile: Profile | null
 }
 
+const EMPTY: Saved = { mode: null, missionId: 'transit', today: null, profile: null }
+
 interface Store {
+  mode: Saved['mode']
+  crew: { name: string; role: string }
+  profile: Profile | null
   mission: Mission
   setMission: (id: string) => void
   day: number
@@ -20,7 +29,11 @@ interface Store {
   baseline: Record<IndicatorId, Baseline>
   today: Values | null
   saveToday: (v: Values) => void
-  reset: () => void
+  startDemo: () => void
+  createProfile: (p: Profile) => void
+  /** Back to the welcome screen. Keeps a saved profile unless `erase` is set. */
+  leave: (erase?: boolean) => void
+  resetDemo: () => void
   assessment: Assessment
   plan: Plan
 }
@@ -30,11 +43,23 @@ const Ctx = createContext<Store | null>(null)
 function load(): Saved {
   try {
     const raw = localStorage.getItem(KEY)
-    if (raw) return { missionId: 'transit', today: null, ...JSON.parse(raw) }
+    if (raw) return { ...EMPTY, ...JSON.parse(raw) }
   } catch {
-    // Storage is unavailable or corrupt: fall back to the demo defaults.
+    // Storage is unavailable or corrupt: start from the welcome screen.
   }
-  return { missionId: 'transit', today: null }
+  return EMPTY
+}
+
+export function isoDate(d = new Date()): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function daysSince(iso: string): number {
+  const [y, m, d] = iso.split('-').map(Number)
+  const then = new Date(y, m - 1, d).getTime()
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+  return Math.max(0, Math.round((today - then) / 86400000))
 }
 
 export function StoreProvider({ children }: { children: ReactNode }) {
@@ -49,27 +74,67 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, [saved])
 
-  const entries = useMemo(
-    () => (saved.today ? [...history, { day: MISSION_DAY, values: saved.today }] : history),
-    [history, saved.today],
-  )
+  const own = saved.mode === 'own' && saved.profile ? saved.profile : null
+  const day = own ? own.startDay + daysSince(own.startedOn) : MISSION_DAY
+  const baseline = own ? own.baseline : DEFAULT_BASELINE
+
+  const entries = useMemo(() => {
+    if (own) return own.entries
+    return saved.today ? [...history, { day: MISSION_DAY, values: saved.today }] : history
+  }, [own, history, saved.today])
+
+  const today = own ? (own.entries.find((e) => e.day === day)?.values ?? null) : saved.today
   const mission = getMission(saved.missionId)
-  const assessment = useMemo(() => assess(entries, DEFAULT_BASELINE), [entries])
+  const assessment = useMemo(() => assess(entries, baseline), [entries, baseline])
   const thePlan = useMemo(() => plan(assessment, mission), [assessment, mission])
 
-  const setMission = useCallback((id: string) => setSaved((s) => ({ ...s, missionId: id })), [])
-  const saveToday = useCallback((v: Values) => setSaved((s) => ({ ...s, today: v })), [])
-  const reset = useCallback(() => setSaved({ missionId: 'transit', today: null }), [])
+  const setMission = useCallback(
+    (id: string) =>
+      setSaved((s) => ({
+        ...s,
+        missionId: id,
+        profile: s.mode === 'own' && s.profile ? { ...s.profile, missionId: getMission(id).id } : s.profile,
+      })),
+    [],
+  )
+
+  const saveToday = useCallback(
+    (v: Values) =>
+      setSaved((s) => {
+        if (s.mode !== 'own' || !s.profile) return { ...s, today: v }
+        const d = s.profile.startDay + daysSince(s.profile.startedOn)
+        const rest = s.profile.entries.filter((e) => e.day !== d)
+        return { ...s, profile: { ...s.profile, entries: [...rest, { day: d, values: v }].sort((a, b) => a.day - b.day) } }
+      }),
+    [],
+  )
+
+  const startDemo = useCallback(() => setSaved((s) => ({ ...s, mode: 'demo', missionId: 'transit', today: null })), [])
+  const createProfile = useCallback(
+    (p: Profile) => setSaved((s) => ({ ...s, mode: 'own', missionId: p.missionId, profile: p })),
+    [],
+  )
+  const leave = useCallback(
+    (erase = false) => setSaved((s) => ({ ...s, mode: null, profile: erase ? null : s.profile })),
+    [],
+  )
+  const resetDemo = useCallback(() => setSaved((s) => ({ ...s, missionId: 'transit', today: null })), [])
 
   const value: Store = {
+    mode: saved.mode,
+    crew: own ? { name: own.name, role: own.role } : { name: 'N. Haddad', role: 'Flight engineer' },
+    profile: saved.profile,
     mission,
     setMission,
-    day: MISSION_DAY,
+    day,
     entries,
-    baseline: DEFAULT_BASELINE,
-    today: saved.today,
+    baseline,
+    today,
     saveToday,
-    reset,
+    startDemo,
+    createProfile,
+    leave,
+    resetDemo,
     assessment,
     plan: thePlan,
   }

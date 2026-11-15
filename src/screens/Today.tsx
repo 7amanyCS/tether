@@ -6,8 +6,40 @@ import { SYSTEMS } from '../lib/indicators'
 import { useStore } from '../lib/store'
 
 export function Today() {
-  const { assessment: a, plan, today, day, mission, entries } = useStore()
+  const { assessment: a, plan, today, day, mission, entries, crew } = useStore()
   const run = streak(entries)
+
+  if (!a.readings.length) {
+    return (
+      <div className="today today-empty">
+        <div className="today-main">
+          <div className="ring ring-empty" aria-hidden="true">
+            <svg viewBox="0 0 240 240">
+              <circle cx="120" cy="120" r="106" className="ring-track" />
+            </svg>
+            <div className="ring-center">
+              <span className="ring-score">–</span>
+            </div>
+          </div>
+          <div className="headline">
+            <h1>Welcome aboard, {crew.name.split(' ')[0]}</h1>
+            <p>
+              Your first check-in sets today’s score. Each one after that shows how far you have moved from your
+              baseline.
+            </p>
+          </div>
+          <div className="checkin-due">
+            <a className="btn btn-primary" href="#/checkin">
+              Start your first check-in
+            </a>
+            <p>
+              About a minute · {mission.name}, {mission.dayLabel.toLowerCase()} {day}
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="today">
