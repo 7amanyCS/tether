@@ -1,0 +1,23 @@
+import { useEffect, useState } from 'react'
+
+function read(): string[] {
+  return window.location.hash.replace(/^#\/?/, '').split('/').filter(Boolean)
+}
+
+/** Minimal hash router: "#/i/sleep" becomes ["i", "sleep"]. */
+export function useRoute(): string[] {
+  const [route, setRoute] = useState(read)
+  useEffect(() => {
+    const on = () => {
+      setRoute(read())
+      window.scrollTo(0, 0)
+    }
+    window.addEventListener('hashchange', on)
+    return () => window.removeEventListener('hashchange', on)
+  }, [])
+  return route
+}
+
+export function go(path: string) {
+  window.location.hash = `/${path}`
+}
