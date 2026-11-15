@@ -72,3 +72,14 @@ To give the assistant a live Gemini link, copy `.env.example` to `.env.local` an
 ## Built with
 
 React, TypeScript, and Vite. The assistant uses the Gemini API through a Cloudflare Pages function. Charts and the body figure are hand-written SVG. Type is Barlow and Barlow Condensed.
+
+## Use of AI tools
+
+- **Code.** The code in this repository was written with an AI coding assistant (Anthropic Claude, through Claude Code), directed and reviewed by the team. Commits made this way carry a `Co-Authored-By: Claude` line.
+- **Text.** This README, the slides, and the one-page summary in [`docs/`](docs/) were drafted with the same assistant.
+- **In the product.** The Ask Tether assistant calls the Google Gemini API when it has a link to the ground.
+- **Images.** No AI-generated images, video, or audio are used. Every image in the slides and one-pager is a screenshot of the running app.
+
+## Team
+
+Tether Health Monitor: Abdulrahman Al Khudhari, Bader Al Saad, Fahad Al Essa, Fahad Al Jindan.
