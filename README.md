@@ -2,6 +2,8 @@
 
 A daily health check for crews on long space missions. Tether compares every reading with the crew member's own pre-flight baseline, shows where they have drifted, and turns that into one decision: handle it yourself, tell the crew medical officer, or contact the flight surgeon.
 
+**Live demo: https://tether-80n.pages.dev**
+
 Built for the 2026 NASA Space Apps Challenge, *Create Health Monitoring Software for Astronauts on Space Missions*.
 
 ## What it does
