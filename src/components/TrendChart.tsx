@@ -10,10 +10,12 @@ interface Props {
   dayLabel: string
   height?: number
   label: string
+  /** Line and band only, for small previews. */
+  compact?: boolean
 }
 
 /** Line of daily readings over the shaded band that counts as normal for this person. */
-export function TrendChart({ points, base, band, status, decimals, dayLabel, height = 150, label }: Props) {
+export function TrendChart({ points, base, band, status, decimals, dayLabel, height = 150, label, compact = false }: Props) {
   const ref = useRef<HTMLDivElement>(null)
   const [w, setW] = useState(0)
 
@@ -25,7 +27,7 @@ export function TrendChart({ points, base, band, status, decimals, dayLabel, hei
     return () => ro.disconnect()
   }, [])
 
-  const pad = { l: 40, r: 10, t: 10, b: 22 }
+  const pad = compact ? { l: 0, r: 6, t: 6, b: 6 } : { l: 40, r: 10, t: 10, b: 22 }
   const vs = points.map((p) => p.v)
   let lo = Math.min(...vs, base.mean - 2 * base.sd)
   let hi = Math.max(...vs, base.mean + 2 * base.sd)
@@ -41,28 +43,37 @@ export function TrendChart({ points, base, band, status, decimals, dayLabel, hei
   const last = points[points.length - 1]
 
   return (
-    <div ref={ref} className={`chart status-${status}`}>
+    <div ref={ref} className={`chart status-${status}`} style={{ height }}>
       {w > 0 && points.length > 0 && (
-        <svg width={w} height={height} role="img" aria-label={label}>
+        // Keyed on the range so the line redraws when the range changes.
+        <svg key={points.length} width={w} height={height} role="img" aria-label={label}>
           <rect x={pad.l} y={bandTop} width={iw} height={Math.max(0, bandBottom - bandTop)} className="chart-band" />
           <line x1={pad.l} x2={pad.l + iw} y1={y(base.mean)} y2={y(base.mean)} className="chart-base" />
-          <polyline points={points.map((p, i) => `${x(i)},${y(p.v)}`).join(' ')} className="chart-line" />
+          <path
+            d={`M${points.map((p, i) => `${x(i).toFixed(1)} ${y(p.v).toFixed(1)}`).join('L')}`}
+            pathLength={1}
+            className="chart-line"
+          />
           <circle cx={x(points.length - 1)} cy={y(last.v)} r="4.5" className="chart-dot" />
-          <text x={pad.l - 8} y={y(hi) + 10} textAnchor="end" className="chart-tick">
-            {hi.toFixed(decimals)}
-          </text>
-          <text x={pad.l - 8} y={y(base.mean) + 4} textAnchor="end" className="chart-tick chart-tick-base">
-            {base.mean.toFixed(decimals)}
-          </text>
-          <text x={pad.l - 8} y={y(lo)} textAnchor="end" className="chart-tick">
-            {lo.toFixed(decimals)}
-          </text>
-          <text x={pad.l} y={height - 4} className="chart-tick">
-            {dayLabel} {points[0].day}
-          </text>
-          <text x={pad.l + iw} y={height - 4} textAnchor="end" className="chart-tick">
-            {dayLabel} {last.day}
-          </text>
+          {!compact && (
+            <>
+              <text x={pad.l - 8} y={y(hi) + 10} textAnchor="end" className="chart-tick">
+                {hi.toFixed(decimals)}
+              </text>
+              <text x={pad.l - 8} y={y(base.mean) + 4} textAnchor="end" className="chart-tick chart-tick-base">
+                {base.mean.toFixed(decimals)}
+              </text>
+              <text x={pad.l - 8} y={y(lo)} textAnchor="end" className="chart-tick">
+                {lo.toFixed(decimals)}
+              </text>
+              <text x={pad.l} y={height - 4} className="chart-tick">
+                {dayLabel} {points[0].day}
+              </text>
+              <text x={pad.l + iw} y={height - 4} textAnchor="end" className="chart-tick">
+                {dayLabel} {last.day}
+              </text>
+            </>
+          )}
         </svg>
       )}
     </div>

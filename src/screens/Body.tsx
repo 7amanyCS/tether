@@ -24,7 +24,7 @@ export function Body() {
     <div className="body-screen">
       <header className="page-head">
         <h1>Body</h1>
-        <p>Select a marker to see what it measures and how it is holding up.</p>
+        <p>Select a marker to see how it is holding up.</p>
       </header>
 
       <div className="body-layout">
@@ -45,7 +45,7 @@ export function Body() {
           </ul>
         </div>
 
-        <div className="body-panel" aria-live="polite">
+        <div className="body-panel" aria-live="polite" key={selected}>
           <div className="group-head">
             <h2 className="panel-title">{def.name}</h2>
             <StatusMark status={state.status} word />

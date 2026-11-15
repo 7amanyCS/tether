@@ -1,4 +1,5 @@
 import { Activity, Orbit, PersonStanding, TrendingUp } from 'lucide-react'
+import { Coach } from './components/Coach'
 import { Logo } from './components/bits'
 import { getIndicator, INDICATORS } from './lib/indicators'
 import { useRoute } from './lib/router'
@@ -54,8 +55,11 @@ export default function App() {
         ))}
       </nav>
       <main id="main" className="main">
-        {screen}
+        <div className="screen" key={route.join('/') || 'today'}>
+          {screen}
+        </div>
       </main>
+      {page !== 'checkin' && <Coach />}
     </div>
   )
 }

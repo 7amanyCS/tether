@@ -4,7 +4,17 @@ import { MISSIONS } from '../lib/missions'
 import { useSensor } from '../lib/sensor'
 import { SOURCES } from '../lib/sources'
 import { useStore } from '../lib/store'
-import { Section } from '../components/bits'
+import type { ReactNode } from 'react'
+import { Disclosure } from '../components/bits'
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="section">
+      <h2>{title}</h2>
+      {children}
+    </section>
+  )
+}
 
 export function Mission() {
   const { mission, setMission, baseline, reset } = useStore()
@@ -73,8 +83,10 @@ export function Mission() {
         )}
       </Section>
 
-      <Section title="Your baseline">
-        <p className="note">Measured on the ground before launch. Every reading is judged against these, not against an average person.</p>
+      <div className="disc-group">
+        <Disclosure summary={<span>Your baseline</span>}>
+          <div className="disc-text">
+            <p className="note">Measured on the ground before launch. Every reading is judged against these, not against an average person.</p>
         <table className="table">
           <thead>
             <tr>
@@ -95,9 +107,10 @@ export function Mission() {
             ))}
           </tbody>
         </table>
-      </Section>
-
-      <Section title="Evidence">
+          </div>
+        </Disclosure>
+        <Disclosure summary={<span>Evidence</span>}>
+          <div className="disc-text">
         <ul className="sources">
           {SOURCES.map((s) => (
             <li key={s.id}>
@@ -108,18 +121,21 @@ export function Mission() {
             </li>
           ))}
         </ul>
-        <p className="note">
-          Tether is a hackathon prototype built on simulated data. Its thresholds illustrate the approach and are not
-          medical advice.
-        </p>
-      </Section>
-
-      <Section title="Demo data">
-        <p className="note">Clear today’s check-in and return to Mars transit.</p>
-        <button type="button" className="btn btn-secondary" onClick={reset}>
-          Reset the demo
-        </button>
-      </Section>
+            <p className="note">
+              Tether is a hackathon prototype built on simulated data. Its thresholds illustrate the approach and are not
+              medical advice.
+            </p>
+          </div>
+        </Disclosure>
+        <Disclosure summary={<span>Demo data</span>}>
+          <div className="disc-text">
+            <p className="note">Clear today’s check-in and return to Mars transit.</p>
+            <button type="button" className="btn btn-secondary" onClick={reset}>
+              Reset the demo
+            </button>
+          </div>
+        </Disclosure>
+      </div>
     </div>
   )
 }

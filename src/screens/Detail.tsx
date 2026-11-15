@@ -1,13 +1,13 @@
 import { ArrowLeft } from 'lucide-react'
 import { useState } from 'react'
 import { TrendChart } from '../components/TrendChart'
-import { Segmented, StatusMark } from '../components/bits'
+import { Disclosure, Segmented, StatusMark } from '../components/bits'
 import { bandFor, deltaText, series } from '../lib/engine'
 import { fmt, systemOf } from '../lib/indicators'
+import { RANGES } from '../lib/ranges'
 import { getSource } from '../lib/sources'
 import { useStore } from '../lib/store'
 import type { IndicatorId } from '../lib/types'
-import { RANGES } from './Trends'
 
 export function Detail({ id }: { id: IndicatorId }) {
   const { assessment: a, entries, baseline, mission } = useStore()
@@ -81,34 +81,51 @@ export function Detail({ id }: { id: IndicatorId }) {
       </div>
 
       <div className="prose">
-        <h2>Why it matters</h2>
-        <p>{r.def.why}</p>
-        <h2>How to measure</h2>
-        <p>{r.def.measure}</p>
-        {guidance.map((g) => (
-          <div key={g.title} className={g.on ? 'guidance guidance-on' : 'guidance'}>
-            <h2>{g.on ? 'What to do now' : g.title}</h2>
-            <ol className="steps">
-              {g.steps.map((s) => (
-                <li key={s}>{s}</li>
-              ))}
-            </ol>
-          </div>
-        ))}
-        <h2>Evidence</h2>
-        <ul className="sources">
-          {r.def.sources.map((s) => {
-            const src = getSource(s)
-            return (
-              <li key={s}>
-                {src.finding}{' '}
-                <a href={src.url} target="_blank" rel="noreferrer">
-                  {src.cite}
-                </a>
-              </li>
-            )
-          })}
-        </ul>
+        <p className="lede">{r.def.why}</p>
+        {guidance
+          .filter((g) => g.on)
+          .map((g) => (
+            <div key={g.title} className="guidance">
+              <h2>What to do now</h2>
+              <ol className="steps">
+                {g.steps.map((s) => (
+                  <li key={s}>{s}</li>
+                ))}
+              </ol>
+            </div>
+          ))}
+      </div>
+
+      <div className="disc-group">
+        <Disclosure summary={<span>How to measure</span>}>
+          <p className="disc-text">{r.def.measure}</p>
+        </Disclosure>
+        {guidance
+          .filter((g) => !g.on)
+          .map((g) => (
+            <Disclosure key={g.title} summary={<span>{g.title}</span>}>
+              <ol className="steps disc-text">
+                {g.steps.map((s) => (
+                  <li key={s}>{s}</li>
+                ))}
+              </ol>
+            </Disclosure>
+          ))}
+        <Disclosure summary={<span>Evidence</span>}>
+          <ul className="sources disc-text">
+            {r.def.sources.map((s) => {
+              const src = getSource(s)
+              return (
+                <li key={s}>
+                  {src.finding}{' '}
+                  <a href={src.url} target="_blank" rel="noreferrer">
+                    {src.cite}
+                  </a>
+                </li>
+              )
+            })}
+          </ul>
+        </Disclosure>
       </div>
     </article>
   )

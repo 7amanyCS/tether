@@ -2,6 +2,7 @@ import { ArrowLeft, Minus, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { MOOD_WORDS, getIndicator } from '../lib/indicators'
 import { go } from '../lib/router'
+import { Disclosure } from '../components/bits'
 import { useSensor } from '../lib/sensor'
 import { useStore } from '../lib/store'
 import type { IndicatorId } from '../lib/types'
@@ -81,6 +82,7 @@ export function CheckIn() {
     return d
   })
   const [i, setI] = useState(0)
+  const [dir, setDir] = useState<'fwd' | 'back'>('fwd')
   const [errors, setErrors] = useState<Partial<Record<IndicatorId, string>>>({})
   const step = STEPS[i]
   const def = getIndicator(step.ids[0])
@@ -98,6 +100,7 @@ export function CheckIn() {
     setErrors(found)
     if (Object.keys(found).length) return
     if (i < STEPS.length - 1) {
+      setDir('fwd')
       setI(i + 1)
       return
     }
@@ -122,7 +125,10 @@ export function CheckIn() {
             <ArrowLeft size={18} aria-hidden="true" /> Cancel
           </a>
         ) : (
-          <button type="button" className="btn-quiet" onClick={() => setI(i - 1)}>
+          <button type="button" className="btn-quiet" onClick={() => {
+              setDir('back')
+              setI(i - 1)
+            }}>
             <ArrowLeft size={18} aria-hidden="true" /> Back
           </button>
         )}
@@ -134,52 +140,55 @@ export function CheckIn() {
         <span style={{ width: `${((i + 1) / STEPS.length) * 100}%` }} />
       </div>
 
-      <h1>{step.title}</h1>
+      <div className={`step step-${dir}`} key={i}>
+        <h1>{step.title}</h1>
 
-      {step.ids[0] === 'mood' ? (
-        <fieldset className="mood">
-          <legend className="sr-only">Mood</legend>
-          {[1, 2, 3, 4, 5].map((n) => (
-            <label key={n}>
-              <input type="radio" name="mood" checked={Number(draft.mood) === n} onChange={() => set('mood', String(n))} />
-              <span className="num">{n}</span>
-              <span>{MOOD_WORDS[n]}</span>
-            </label>
-          ))}
-        </fieldset>
-      ) : (
-        <div className="fields">
-          {step.ids.map((id) => (
-            <NumberField key={id} id={id} value={draft[id]} onChange={(v) => set(id, v)} error={errors[id] ?? null} />
-          ))}
-        </div>
-      )}
+        {step.ids[0] === 'mood' ? (
+          <fieldset className="mood">
+            <legend className="sr-only">Mood</legend>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <label key={n}>
+                <input type="radio" name="mood" checked={Number(draft.mood) === n} onChange={() => set('mood', String(n))} />
+                <span className="num">{n}</span>
+                <span>{MOOD_WORDS[n]}</span>
+              </label>
+            ))}
+          </fieldset>
+        ) : (
+          <div className="fields">
+            {step.ids.map((id) => (
+              <NumberField key={id} id={id} value={draft[id]} onChange={(v) => set(id, v)} error={errors[id] ?? null} />
+            ))}
+          </div>
+        )}
 
-      {step.ids[0] === 'rhr' && (
-        <div className="sensor-inline">
-          {sensor.state === 'live' && sensor.bpm !== null ? (
-            <>
+        {step.ids[0] === 'rhr' && (
+          <div className="sensor-inline">
+            {sensor.state === 'live' && sensor.bpm !== null ? (
+              <>
+                <p>
+                  <span className="live-dot" aria-hidden="true" />
+                  {sensor.name}: <strong className="num">{sensor.bpm}</strong> bpm
+                </p>
+                <button type="button" className="btn btn-secondary" onClick={() => set('rhr', String(sensor.bpm))}>
+                  Use this reading
+                </button>
+              </>
+            ) : (
               <p>
-                <span className="live-dot" aria-hidden="true" />
-                {sensor.name}: <strong className="num">{sensor.bpm}</strong> bpm
+                No sensor connected. Type your reading, or <a href="#/mission">connect a wearable</a> to fill it in.
               </p>
-              <button type="button" className="btn btn-secondary" onClick={() => set('rhr', String(sensor.bpm))}>
-                Use this reading
-              </button>
-            </>
-          ) : (
-            <p>
-              No sensor connected. Type your reading, or <a href="#/mission">connect a wearable</a> to fill it in.
-            </p>
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        )}
 
-      <div className="hint">
-        <h2>How to measure</h2>
-        <p>{def.measure}</p>
-        <h2>Why it matters</h2>
-        <p>{def.why}</p>
+        <Disclosure className="disc-hint" summary={<span>How do I measure this?</span>}>
+          <div className="hint">
+            <p>{def.measure}</p>
+            <h2>Why it matters</h2>
+            <p>{def.why}</p>
+          </div>
+        </Disclosure>
       </div>
 
       <div className="checkin-actions">

@@ -10,6 +10,7 @@ Built for the 2026 NASA Space Apps Challenge, *Create Health Monitoring Software
 - **Tether score.** A single 0 to 100 score with three states, Steady, Drifting, and Off baseline. Each state has its own colour, shape, and word, so it reads without colour vision.
 - **Body map.** Five body systems on a figure, each tied to one of NASA's five hazards of human spaceflight.
 - **A plan, not just a number.** Rules decide who needs to act. A single off day is yours to handle. A trend of three days, or two systems drifting together, goes to the crew medical officer. Anything outside a safe range goes to the ground.
+- **Ask Tether.** An assistant docked at the bottom of every screen. It suggests questions from the crew member's current state ("Why is my score 62?", "How do I get my sleep back?") and answers from their own readings. With a link to the ground it uses Google Gemini; without one it answers from the on-board rules, so it keeps working when Earth is out of reach.
 - **Distance from Earth.** Choose space station, lunar surface, Mars transit, or Mars surface. The signal delay changes the advice: on the way to Mars a reply takes 20 minutes, so Tether tells you what to do while you wait.
 - **Radiation.** Cumulative dose for the mission against NASA's 600 mSv career limit.
 - **Wearables.** Connects to any band, watch, or chest strap that broadcasts the standard Bluetooth heart-rate service, and fills in the heart-rate step from the live reading. Needs Chrome or Edge. A simulated sensor is included for demos.
@@ -23,7 +24,7 @@ Every indicator has a personal baseline (mean and normal day-to-day swing) measu
 
 Sleep, mood, resting heart rate, and exercise are judged on a three-day average so one bad night does not raise a flag. Temperature, blood pressure, and glucose are judged on the latest reading. The logic is in [`src/lib/engine.ts`](src/lib/engine.ts) and the limits are in [`src/lib/indicators.ts`](src/lib/indicators.ts).
 
-All of this is plain rules. There is no model in the loop, so every recommendation can be traced to the reading and the limit that caused it.
+All of this is plain rules. No model decides a status or a plan, so every recommendation can be traced to the reading and the limit that caused it. The assistant only explains: it is given the readings and the plan the rules already produced, and is told not to invent numbers, diagnose, or soften the plan ([`server/coach.ts`](server/coach.ts)).
 
 ## Data and sources
 
@@ -51,7 +52,9 @@ npm install
 npm run dev
 ```
 
-`npm run build` writes a static site to `dist/`, which can be hosted anywhere.
+To give the assistant a live Gemini link, copy `.env.example` to `.env.local` and add a key. Without one it answers from the on-board rules.
+
+`npm run build` writes a static site to `dist/`. On Cloudflare Pages, `functions/api/coach.ts` serves the assistant; set `GEMINI_API_KEY` in the project's environment variables.
 
 ## Demo script
 
@@ -59,8 +62,9 @@ npm run dev
 2. Open **Body** and select the head and chest markers to show what is driving it.
 3. Start the check-in. On the temperature step, enter 38.4.
 4. The score drops to Off baseline and the plan changes to contacting the flight surgeon, with a 20-minute reply time and steps to take while waiting.
-5. Open **Mission** and switch to the space station to show the same reading with a live link to the ground.
+5. Tap **Ask Tether** and pick "What do I do while I wait for the ground?"
+6. Open **Mission** and switch to the space station to show the same reading with a live link to the ground.
 
 ## Built with
 
-React, TypeScript, and Vite. Charts and the body figure are hand-written SVG. Type is Barlow and Barlow Condensed.
+React, TypeScript, and Vite. The assistant uses the Gemini API through a Cloudflare Pages function. Charts and the body figure are hand-written SVG. Type is Barlow and Barlow Condensed.

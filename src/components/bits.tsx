@@ -1,17 +1,25 @@
-import type { ReactNode } from 'react'
+import { ChevronDown } from 'lucide-react'
+import { useId, useState, type ReactNode } from 'react'
 import { STATUS_WORD } from '../lib/engine'
+import { useCountUp } from '../lib/motion'
 import type { Status } from '../lib/types'
 
+export function LogoMark({ size = 26 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 28 28" width={size} height={size} aria-hidden="true">
+      <circle cx="11" cy="17" r="8" fill="none" stroke="currentColor" strokeWidth="2.4" />
+      <path d="M16.7 11.3 22 6" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+      <circle cx="23.2" cy="4.8" r="2.6" fill="currentColor" />
+    </svg>
+  )
+}
+
 /** Brand mark: a body held on a line to the point it started from. */
-export function Logo({ compact = false }: { compact?: boolean }) {
+export function Logo() {
   return (
     <span className="logo">
-      <svg viewBox="0 0 28 28" width="26" height="26" aria-hidden="true">
-        <circle cx="11" cy="17" r="8" fill="none" stroke="currentColor" strokeWidth="2.4" />
-        <path d="M16.7 11.3 22 6" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-        <circle cx="23.2" cy="4.8" r="2.6" fill="currentColor" />
-      </svg>
-      {!compact && <span className="logo-word">Tether</span>}
+      <LogoMark />
+      <span className="logo-word">Tether</span>
     </span>
   )
 }
@@ -37,8 +45,9 @@ export function StatusMark({ status, word = false, size = 12 }: { status: Status
 }
 
 export function ScoreRing({ score, status }: { score: number; status: Status }) {
-  const r = 104
+  const r = 106
   const c = 2 * Math.PI * r
+  const shown = useCountUp(score, 1100)
   return (
     <div className={`ring status-${status}`} role="img" aria-label={`Tether score ${score} out of 100. ${STATUS_WORD[status]}.`}>
       <svg viewBox="0 0 240 240" aria-hidden="true">
@@ -49,12 +58,12 @@ export function ScoreRing({ score, status }: { score: number; status: Status }) 
           r={r}
           className="ring-value"
           strokeDasharray={c}
-          strokeDashoffset={c * (1 - score / 100)}
+          strokeDashoffset={c * (1 - shown / 100)}
           transform="rotate(-90 120 120)"
         />
       </svg>
       <div className="ring-center" aria-hidden="true">
-        <span className="ring-score">{score}</span>
+        <span className="ring-score">{Math.round(shown)}</span>
         <StatusMark status={status} word />
       </div>
     </div>
@@ -83,14 +92,29 @@ export function Segmented<T extends string | number>({
   )
 }
 
-export function Section({ title, aside, children }: { title: string; aside?: ReactNode; children: ReactNode }) {
+/** A row that opens in place. Keeps detail one tap away instead of on screen. */
+export function Disclosure({
+  summary,
+  children,
+  defaultOpen = false,
+  className = '',
+}: {
+  summary: ReactNode
+  children: ReactNode
+  defaultOpen?: boolean
+  className?: string
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+  const id = useId()
   return (
-    <section className="section">
-      <div className="section-head">
-        <h2>{title}</h2>
-        {aside}
+    <div className={`disc ${open ? 'is-open' : ''} ${className}`}>
+      <button type="button" className="disc-btn" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
+        <span className="disc-summary">{summary}</span>
+        <ChevronDown size={18} aria-hidden="true" className="disc-chev" />
+      </button>
+      <div id={id} className="disc-body" inert={!open}>
+        <div className="disc-inner">{children}</div>
       </div>
-      {children}
-    </section>
+    </div>
   )
 }
