@@ -7,6 +7,11 @@ interface Env {
 
 /** Cloudflare Pages function: POST /api/coach */
 export async function onRequestPost({ request, env }: { request: Request; env: Env }): Promise<Response> {
+  // The key is paid for by this project, so only answer pages served from this site.
+  const origin = request.headers.get('origin')
+  if (!origin || new URL(origin).host !== new URL(request.url).host) {
+    return Response.json({ error: 'forbidden' }, { status: 403 })
+  }
   let body: unknown = null
   try {
     body = await request.json()
